@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>米粉パン レシピ計算</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+      background: #fdf6ee;
+      color: #333;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+
+    header {
+      background: #c8860a;
+      color: white;
+      padding: 16px 20px;
+      text-align: center;
+    }
+    header h1 { font-size: 1.2rem; font-weight: bold; }
+    header p { font-size: 0.8rem; margin-top: 4px; opacity: 0.9; }
+
+    .container { padding: 16px; max-width: 500px; margin: 0 auto; }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #c8860a;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #f0e0c0;
+    }
+
+    /* URL取得エリア */
+    .url-input-row {
+      display: flex;
+      gap: 8px;
+    }
+    .url-input-row input {
+      flex: 1;
+      padding: 11px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: #fafafa;
+      min-width: 0;
+    }
+    .url-fetch-btn {
+      flex: 0 0 auto;
+      padding: 11px 14px;
+      background: #c8860a;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .url-fetch-btn:active { background: #a06808; }
+    .url-fetch-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+    .url-note {
+      font-size: 0.76rem;
+      color: #aaa;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .url-status {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      padding: 8px 12px;
+      border-radius: 8px;
+      display: none;
+    }
+    .url-status.loading { background: #f0f4ff; color: #668; border: 1px solid #ccd; }
+    .url-status.success { background: #f0fff4; color: #282; border: 1px solid #9d9; }
+    .url-status.error   { background: #fee; color: #c44; border: 1px solid #fcc; }
+    .url-status.warn    { background: #fffbe6; color: #886; border: 1px solid #eedd88; }
+
+    /* 材料入力 */
+    .ingredient-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .ingredient-row input[type="text"] {
+      flex: 2;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      background: #fafafa;
+    }
+    .ingredient-row input[type="number"] {
+      flex: 1;
+      padding: 10px 8px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      text-align: right;
+      background: #fafafa;
+    }
+    .ingredient-row .unit {
+      flex: 0 0 40px;
+      font-size: 0.8rem;
+      color: #888;
+      text-align: center;
+    }
+    .del-btn {
+      flex: 0 0 32px;
+      width: 32px;
+      height: 32px;
+      background: #fee;
+      border: 1px solid #fcc;
+      border-radius: 50%;
+      color: #c44;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .col-labels {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 4px;
+      padding-right: 40px;
+    }
+    .col-labels span { font-size: 0.75rem; color: #999; }
+    .col-labels span:first-child { flex: 2; }
+    .col-labels span:nth-child(2) { flex: 1; text-align: right; }
+    .col-labels span:nth-child(3) { flex: 0 0 40px; text-align: center; }
+
+    .add-btn {
+      width: 100%;
+      padding: 11px;
+      background: #f5ead8;
+      border: 2px dashed #c8a060;
+      border-radius: 8px;
+      color: #a06020;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    .add-btn:active { background: #eedfc5; }
+
+    /* 基準 */
+    .base-select-area label {
+      display: block;
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    .base-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .base-row select {
+      flex: 2;
+      padding: 12px 10px;
+      border: 2px solid #c8860a;
+      border-radius: 8px;
+      font-size: 1rem;
+      background: #fff;
+      color: #333;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .base-row input[type="number"] {
+      flex: 1;
+      padding: 12px 8px;
+      border: 2px solid #c8860a;
+      border-radius: 8px;
+      font-size: 1rem;
+      text-align: right;
+    }
+    .base-row .unit-label {
+      flex: 0 0 24px;
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+    .calc-btn {
+      width: 100%;
+      padding: 14px;
+      background: #c8860a;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.05rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 4px;
+      letter-spacing: 0.05em;
+    }
+    .calc-btn:active { background: #a06808; }
+
+    /* 結果 */
+    #result-card { display: none; }
+    .result-ratio {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 12px;
+    }
+    .result-ratio span {
+      background: #fff3e0;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid #f0c060;
+      color: #a06020;
+      font-weight: bold;
+    }
+
+    .result-table { width: 100%; border-collapse: collapse; }
+    .result-table th {
+      font-size: 0.8rem;
+      color: #999;
+      font-weight: normal;
+      padding: 4px 8px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    .result-table th:last-child { text-align: right; }
+    .result-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #f0ead8;
+      font-size: 1rem;
+    }
+    .result-table td:last-child { text-align: right; font-weight: bold; }
+    .result-table tr.highlight td {
+      background: #fff8e8;
+      color: #c8860a;
+      font-weight: bold;
+    }
+    .result-table tr:last-child td { border-bottom: none; }
+    .original-val {
+      font-size: 0.78rem;
+      color: #bbb;
+      display: block;
+    }
+
+    .error-msg {
+      background: #fee;
+      border: 1px solid #fcc;
+      color: #c44;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+
+    /* プリセット */
+    .preset-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+    .preset-btn {
+      padding: 6px 12px;
+      background: #f0e8d8;
+      border: 1px solid #d0c0a0;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      color: #806040;
+      cursor: pointer;
+    }
+    .preset-btn:active { background: #e0d0b8; }
+    .preset-label { font-size: 0.78rem; color: #aaa; margin-bottom: 8px; }
+
+    /* スピナー */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid #aac;
+      border-top-color: #448;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🍞 米粉パン レシピ計算</h1>
+  <p>材料の量を自動で計算しなおします</p>
+</header>
+
+<div class="container">
+
+  <!-- URL取得 -->
+  <div class="card">
+    <h2>URLからレシピを読み込む</h2>
+    <div class="url-input-row">
+      <input type="url" id="recipe-url" placeholder="レシピのURLを貼り付け">
+      <button class="url-fetch-btn" id="fetch-btn" onclick="fetchRecipe()">取得</button>
+    </div>
+    <div class="url-note">
+      対応サイト例: Cookpad・Nadia・クラシル・白ごはん.com など<br>
+      取得できない場合は下の手動入力をご利用ください
+    </div>
+    <div class="url-status" id="url-status"></div>
+  </div>
+
+  <!-- プリセット -->
+  <div class="card">
+    <h2>サンプルレシピを使う</h2>
+    <div class="preset-label">タップするとサンプルが入力されます</div>
+    <div class="preset-btns">
+      <button class="preset-btn" onclick="loadPreset('basic')">基本の米粉パン</button>
+      <button class="preset-btn" onclick="loadPreset('toast')">米粉食パン</button>
+      <button class="preset-btn" onclick="loadPreset('roll')">米粉ロールパン</button>
+    </div>
+  </div>
+
+  <!-- 元のレシピ入力 -->
+  <div class="card">
+    <h2>① 元のレシピ（手動入力も可）</h2>
+    <div class="col-labels">
+      <span>材料名</span>
+      <span>量</span>
+      <span>単位</span>
+    </div>
+    <div id="ingredient-list"></div>
+    <button class="add-btn" onclick="addRow()">＋ 材料を追加</button>
+  </div>
+
+  <!-- 基準材料 -->
+  <div class="card">
+    <h2>② 固定したい材料と量を指定</h2>
+    <div class="base-select-area">
+      <label>どの材料を基準にしますか？</label>
+      <div class="base-row">
+        <select id="base-ingredient">
+          <option value="">-- 材料を選択 --</option>
+        </select>
+        <input type="number" id="base-amount" placeholder="3" min="0.1" step="0.1">
+        <span class="unit-label" id="base-unit-label">g</span>
+      </div>
+    </div>
+    <div style="height:12px"></div>
+    <button class="calc-btn" onclick="calculate()">計算する</button>
+    <div id="error-area"></div>
+  </div>
+
+  <!-- 結果 -->
+  <div class="card" id="result-card">
+    <h2>③ 計算結果</h2>
+    <div class="result-ratio">倍率: <span id="ratio-display"></span></div>
+    <table class="result-table">
+      <thead>
+        <tr>
+          <th>材料</th>
+          <th>元の量</th>
+          <th>計算後</th>
+        </tr>
+      </thead>
+      <tbody id="result-body"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  let ingredients = [];
+
+  const presets = {
+    basic: [
+      { name: '米粉', amount: 200, unit: 'g' },
+      { name: 'ドライイースト', amount: 4, unit: 'g' },
+      { name: '砂糖', amount: 10, unit: 'g' },
+      { name: '塩', amount: 3, unit: 'g' },
+      { name: 'オリーブオイル', amount: 15, unit: 'ml' },
+      { name: 'ぬるま湯', amount: 200, unit: 'ml' },
+    ],
+    toast: [
+      { name: '米粉', amount: 250, unit: 'g' },
+      { name: 'ドライイースト', amount: 5, unit: 'g' },
+      { name: '砂糖', amount: 20, unit: 'g' },
+      { name: '塩', amount: 4, unit: 'g' },
+      { name: 'バター', amount: 20, unit: 'g' },
+      { name: '卵', amount: 50, unit: 'g' },
+      { name: 'ぬるま湯', amount: 180, unit: 'ml' },
+    ],
+    roll: [
+      { name: '米粉', amount: 180, unit: 'g' },
+      { name: 'ドライイースト', amount: 4, unit: 'g' },
+      { name: '砂糖', amount: 18, unit: 'g' },
+      { name: '塩', amount: 2.5, unit: 'g' },
+      { name: 'バター', amount: 18, unit: 'g' },
+      { name: '牛乳', amount: 160, unit: 'ml' },
+    ],
+  };
+
+  // ---- URL取得 ----
+
+  async function fetchRecipe() {
+    const url = document.getElementById('recipe-url').value.trim();
+    const status = document.getElementById('url-status');
+    const btn = document.getElementById('fetch-btn');
+
+    if (!url || !url.startsWith('http')) {
+      showStatus('error', 'URLを正しく入力してください（http〜）');
+      return;
+    }
+
+    showStatus('loading', '<span class="spinner"></span>レシピを取得中...');
+    btn.disabled = true;
+
+    try {
+      const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      const html = data.contents;
+      if (!html) throw new Error('コンテンツが空です');
+
+      const parsed = parseRecipeFromHtml(html);
+
+      if (parsed.length === 0) {
+        showStatus('warn', '材料を自動取得できませんでした。手動で入力してください。');
+      } else {
+        ingredients = parsed;
+        renderList();
+        updateSelect();
+        document.getElementById('result-card').style.display = 'none';
+        document.getElementById('error-area').innerHTML = '';
+        showStatus('success', `✓ ${parsed.length}件の材料を取得しました。数量を確認してください。`);
+      }
+    } catch (e) {
+      if (e.name === 'TimeoutError') {
+        showStatus('error', 'タイムアウトしました。URLを確認するか手動入力してください。');
+      } else {
+        showStatus('error', '取得できませんでした。サイトによっては非対応です。手動入力してください。');
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function showStatus(type, msg) {
+    const el = document.getElementById('url-status');
+    el.className = 'url-status ' + type;
+    el.innerHTML = msg;
+    el.style.display = 'block';
+  }
+
+  // HTML からレシピ構造データを解析
+  function parseRecipeFromHtml(html) {
+    // 1) JSON-LD schema.org/Recipe を探す
+    const jsonldMatches = html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+    for (const m of jsonldMatches) {
+      try {
+        const raw = m[1].trim();
+        const obj = JSON.parse(raw);
+        const recipes = findRecipeObjects(obj);
+        for (const recipe of recipes) {
+          const items = recipe.recipeIngredient || recipe.ingredients || [];
+          if (items.length > 0) {
+            const parsed = items.map(s => parseIngredientString(String(s))).filter(Boolean);
+            if (parsed.length > 0) return parsed;
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 2) フォールバック: よくあるHTMLパターンを探す
+    return fallbackHtmlParse(html);
+  }
+
+  // JSON-LDオブジェクトから @type:Recipe を再帰的に探す
+  function findRecipeObjects(obj) {
+    if (!obj) return [];
+    const results = [];
+    if (Array.isArray(obj)) {
+      for (const item of obj) results.push(...findRecipeObjects(item));
+    } else if (typeof obj === 'object') {
+      const t = (obj['@type'] || '');
+      const types = Array.isArray(t) ? t : [t];
+      if (types.some(x => /recipe/i.test(x))) results.push(obj);
+      for (const v of Object.values(obj)) {
+        if (typeof v === 'object') results.push(...findRecipeObjects(v));
+      }
+    }
+    return results;
+  }
+
+  // 日本語材料文字列のパース
+  // 例: "米粉 200g", "ドライイースト 4g", "砂糖 大さじ2", "塩 小さじ1/2"
+  function parseIngredientString(s) {
+    s = s.replace(/\s+/g, ' ').trim();
+    if (!s || s.length < 2) return null;
+
+    // 量と単位のパターン
+    const unitPatterns = [
+      { re: /(\d+(?:[./]\d+)?)\s*(ml|mL|cc|ミリ)/, unit: 'ml' },
+      { re: /(\d+(?:[./]\d+)?)\s*(g|グラム)/, unit: 'g' },
+      { re: /(\d+(?:[./]\d+)?)\s*(大さじ)/, unit: '大さじ' },
+      { re: /(\d+(?:[./]\d+)?)\s*(小さじ)/, unit: '小さじ' },
+      { re: /(大さじ)\s*(\d+(?:[./]\d+)?)/, unit: '大さじ', swap: true },
+      { re: /(小さじ)\s*(\d+(?:[./]\d+)?)/, unit: '小さじ', swap: true },
+      { re: /(\d+(?:[./]\d+)?)\s*(個|枚|本|袋|缶|カップ|cup|Cup)/, unit: function(m){ return m[2]; } },
+      { re: /(\d+(?:[./]\d+)?)/, unit: '' },  // 数字だけ
+    ];
+
+    let amount = null, unit = '', rest = s;
+
+    for (const p of unitPatterns) {
+      const m = s.match(p.re);
+      if (m) {
+        const numStr = p.swap ? m[2] : m[1];
+        amount = evalFraction(numStr);
+        unit = typeof p.unit === 'function' ? p.unit(m) : p.unit;
+        rest = s.replace(m[0], '').trim();
+        break;
+      }
+    }
+
+    if (amount === null) {
+      // 数字なし → 量なしの材料（適量など）→ amount=0 でそのまま登録
+      return { name: s, amount: 0, unit: '適量' };
+    }
+
+    // 名前: restから不要文字を除去
+    const name = rest.replace(/^[\s・\-：:、。]+|[\s・\-：:、。]+$/g, '').trim() || s;
+
+    if (!name || amount < 0) return null;
+    return { name, amount, unit };
+  }
+
+  // "1/2" や "1.5" を数値に変換
+  function evalFraction(s) {
+    if (!s) return null;
+    if (s.includes('/')) {
+      const parts = s.split('/');
+      const n = parseFloat(parts[0]), d = parseFloat(parts[1]);
+      return (d && !isNaN(n)) ? n / d : null;
+    }
+    const v = parseFloat(s);
+    return isNaN(v) ? null : v;
+  }
+
+  // HTMLから直接テキストを抽出するフォールバック
+  function fallbackHtmlParse(html) {
+    // タグを除去してテキスト行を取得
+    const text = html
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/&nbsp;/g, ' ').replace(/&#\d+;/g, '');
+
+    const lines = text.split(/[\n\r]+/).map(l => l.trim()).filter(l => l.length > 1 && l.length < 80);
+    const results = [];
+    for (const line of lines) {
+      // g や ml や大さじ を含む行だけ対象
+      if (/\d/.test(line) && /(g|ml|mL|cc|大さじ|小さじ|個|本|枚|袋|カップ)/.test(line)) {
+        const p = parseIngredientString(line);
+        if (p && p.name && p.amount > 0 && p.name.length < 30) {
+          // 重複除去
+          if (!results.some(r => r.name === p.name)) results.push(p);
+        }
+      }
+    }
+    return results.slice(0, 30);
+  }
+
+  // ---- 手動入力 ----
+
+  function loadPreset(key) {
+    ingredients = presets[key].map(i => ({ ...i }));
+    renderList();
+    updateSelect();
+    document.getElementById('result-card').style.display = 'none';
+    document.getElementById('error-area').innerHTML = '';
+    document.getElementById('url-status').style.display = 'none';
+  }
+
+  function renderList() {
+    const list = document.getElementById('ingredient-list');
+    list.innerHTML = '';
+    ingredients.forEach((ing, i) => {
+      const row = document.createElement('div');
+      row.className = 'ingredient-row';
+      row.innerHTML = `
+        <input type="text" placeholder="材料名" value="${escHtml(ing.name)}"
+          oninput="ingredients[${i}].name=this.value; updateSelect()">
+        <input type="number" placeholder="量" value="${ing.amount || ''}" min="0" step="0.1"
+          oninput="ingredients[${i}].amount=parseFloat(this.value)||0">
+        <span class="unit">${escHtml(ing.unit)}</span>
+        <button class="del-btn" onclick="removeRow(${i})">×</button>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function addRow() {
+    ingredients.push({ name: '', amount: 0, unit: 'g' });
+    renderList();
+    updateSelect();
+    const inputs = document.querySelectorAll('#ingredient-list .ingredient-row input[type="text"]');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }
+
+  function removeRow(i) {
+    ingredients.splice(i, 1);
+    renderList();
+    updateSelect();
+  }
+
+  function updateSelect() {
+    const sel = document.getElementById('base-ingredient');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">-- 材料を選択 --</option>';
+    ingredients.forEach((ing, i) => {
+      if (ing.name) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = ing.name;
+        if (String(i) === current) opt.selected = true;
+        sel.appendChild(opt);
+      }
+    });
+    // 基準単位ラベルを更新
+    const idx = parseInt(sel.value);
+    if (!isNaN(idx) && ingredients[idx]) {
+      document.getElementById('base-unit-label').textContent = ingredients[idx].unit || 'g';
+    }
+  }
+
+  // ---- 計算 ----
+
+  function calculate() {
+    const errorArea = document.getElementById('error-area');
+    errorArea.innerHTML = '';
+
+    const sel = document.getElementById('base-ingredient');
+    const baseIdx = sel.value;
+    const baseAmount = parseFloat(document.getElementById('base-amount').value);
+
+    if (baseIdx === '') {
+      errorArea.innerHTML = '<div class="error-msg">基準にする材料を選んでください。</div>';
+      return;
+    }
+    if (!baseAmount || baseAmount <= 0) {
+      errorArea.innerHTML = '<div class="error-msg">基準となる量を入力してください。</div>';
+      return;
+    }
+    const valid = ingredients.filter(i => i.name && i.amount > 0);
+    if (valid.length === 0) {
+      errorArea.innerHTML = '<div class="error-msg">材料を入力してください。</div>';
+      return;
+    }
+
+    const originalBase = ingredients[parseInt(baseIdx)].amount;
+    if (!originalBase || originalBase <= 0) {
+      errorArea.innerHTML = '<div class="error-msg">基準材料の元の量が0です。入力を確認してください。</div>';
+      return;
+    }
+    const ratio = baseAmount / originalBase;
+
+    document.getElementById('ratio-display').textContent = '×' + ratio.toFixed(3);
+
+    const tbody = document.getElementById('result-body');
+    tbody.innerHTML = '';
+    ingredients.forEach((ing, i) => {
+      if (!ing.name) return;
+      const newAmount = ing.amount * ratio;
+      const tr = document.createElement('tr');
+      if (i === parseInt(baseIdx)) tr.className = 'highlight';
+
+      const fmt = (v) => {
+        if (v === 0) return '0';
+        if (v < 1) return Math.round(v * 100) / 100;
+        if (v < 10) return Math.round(v * 10) / 10;
+        return Math.round(v);
+      };
+
+      tr.innerHTML = `
+        <td>${escHtml(ing.name)}</td>
+        <td><span class="original-val">${ing.amount}${escHtml(ing.unit)}</span></td>
+        <td>${fmt(newAmount)} ${escHtml(ing.unit)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('result-card').style.display = 'block';
+    document.getElementById('result-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // セレクト変更時に単位ラベル更新
+  document.getElementById('base-ingredient').addEventListener('change', function() {
+    const idx = parseInt(this.value);
+    if (!isNaN(idx) && ingredients[idx]) {
+      document.getElementById('base-unit-label').textContent = ingredients[idx].unit || 'g';
+    }
+  });
+
+  // 初期ロード
+  loadPreset('basic');
+  setTimeout(() => {
+    const sel = document.getElementById('base-ingredient');
+    for (const opt of sel.options) {
+      if (opt.textContent === 'ドライイースト') { opt.selected = true; break; }
+    }
+    document.getElementById('base-amount').value = 3;
+    document.getElementById('base-unit-label').textContent = 'g';
+  }, 50);
+</script>
+
+</body>
+</html>
