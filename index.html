@@ -315,7 +315,7 @@
       <button class="url-fetch-btn" id="fetch-btn" onclick="fetchRecipe()">取得</button>
     </div>
     <div class="url-note">
-      対応サイト例: Cookpad・Nadia・クラシル・白ごはん.com など<br>
+      対応サイト例: Nadia・クラシル・白ごはん.com など<br>      ※クックパッドはアクセス制限のため非対応です<br>
       取得できない場合は下の手動入力をご利用ください
     </div>
     <div class="url-status" id="url-status"></div>
@@ -420,6 +420,11 @@
 
     if (!url || !url.startsWith('http')) {
       showStatus('error', 'URLを正しく入力してください（http〜）');
+      return;
+    }
+
+    if (url.includes("cookpad.com")) {
+      showStatus("error", "クックパッドはアクセス制限のため取得できません。材料を手動で入力してください。");
       return;
     }
 
