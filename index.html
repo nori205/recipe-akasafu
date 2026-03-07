@@ -115,12 +115,21 @@
       text-align: right;
       background: #fafafa;
     }
-    .ingredient-row .unit {
-      flex: 0 0 auto;
-      min-width: 28px;
+    .unit-select {
+      flex: 0 0 64px;
+      min-width: 0;
+      padding: 10px 2px 10px 6px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
       font-size: 0.8rem;
-      color: #888;
-      text-align: center;
+      background: #fafafa;
+      color: #555;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/>%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 4px center;
+      cursor: pointer;
     }
     .del-btn {
       flex: 0 0 32px;
@@ -146,7 +155,7 @@
     .col-labels span { font-size: 0.75rem; color: #999; }
     .col-labels span:first-child { flex: 2; }
     .col-labels span:nth-child(2) { flex: 1; text-align: right; }
-    .col-labels span:nth-child(3) { flex: 0 0 40px; text-align: center; }
+    .col-labels span:nth-child(3) { flex: 0 0 64px; text-align: center; }
 
     .add-btn {
       width: 100%;
@@ -611,7 +620,9 @@
           oninput="ingredients[${i}].name=this.value; updateSelect()">
         <input type="number" placeholder="量" value="${ing.amount || ''}" min="0" step="0.1"
           oninput="ingredients[${i}].amount=parseFloat(this.value)||0">
-        <span class="unit">${escHtml(ing.unit)}</span>
+        <select class="unit-select" onchange="ingredients[${i}].unit=this.value;updateSelect()">
+          ${['g','ml','大さじ','小さじ','個','本','枚','カップ','cc','kg','適量'].map(u=>`<option value="${u}"${ing.unit===u?' selected':''}>${u}</option>`).join('')}
+        </select>
         <button class="del-btn" onclick="removeRow(${i})">×</button>
       `;
       list.appendChild(row);
