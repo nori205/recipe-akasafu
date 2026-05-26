@@ -391,7 +391,8 @@
           <span id="base-btn-text">-- 材料を選択 --</span>
           <span class="arrow">▼</span>
         </button>
-        <input type="number" id="base-amount" placeholder="量" min="0.1" step="0.1">
+        <input type="number" id="base-amount" placeholder="量" min="0.1" step="0.1"
+          onfocus="setTimeout(()=>this.scrollIntoView({behavior:'smooth',block:'center'}),400)">
         <span class="unit-label" id="base-unit-label"></span>
       </div>
     </div>
@@ -510,18 +511,18 @@
   // ---- 基準材料シート ----
 
   function openBaseSheet() {
-    const named = ingredients.map((ing, i) => ({ ing, i })).filter(x => x.ing.name);
-    if (named.length === 0) {
-      document.getElementById('error-area').innerHTML =
-        '<div class="error-msg">先に材料名を入力してください。</div>';
-      return;
-    }
     document.getElementById('error-area').innerHTML = '';
+    const named = ingredients.map((ing, i) => ({ ing, i })).filter(x => x.ing.name);
+    const listEl = document.getElementById('base-list');
 
-    document.getElementById('base-list').innerHTML = named.map(({ ing, i }) =>
-      `<div class="sheet-item${String(i) === String(baseIdx) ? ' selected' : ''}"
-        onclick="selectBase(${i})">${escHtml(ing.name)}</div>`
-    ).join('');
+    if (named.length === 0) {
+      listEl.innerHTML = '<div class="sheet-item" style="color:#aaa;pointer-events:none;font-size:0.9rem;">①で材料名を入力するとここに表示されます</div>';
+    } else {
+      listEl.innerHTML = named.map(({ ing, i }) =>
+        `<div class="sheet-item${String(i) === String(baseIdx) ? ' selected' : ''}"
+          onclick="selectBase(${i})">${escHtml(ing.name)}</div>`
+      ).join('');
+    }
 
     document.getElementById('base-overlay').classList.add('active');
     document.getElementById('base-sheet').classList.add('active');
@@ -567,6 +568,7 @@
           ${ing.name ? escHtml(ing.name) : '材料を選ぶ'}
         </button>
         <input type="number" placeholder="量" value="${ing.amount || ''}" min="0" step="0.1"
+          onfocus="setTimeout(()=>this.scrollIntoView({behavior:'smooth',block:'center'}),400)"
           oninput="ingredients[${i}].amount=parseFloat(this.value)||0">
         <select class="unit-select" onchange="ingredients[${i}].unit=this.value; updateBaseBtn()">
           ${['g','ml','大さじ','小さじ','個','本','枚','カップ','cc','kg','適量'].map(u =>
