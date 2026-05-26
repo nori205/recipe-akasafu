@@ -392,7 +392,7 @@
           <span class="arrow">▼</span>
         </button>
         <input type="number" id="base-amount" placeholder="量" min="0.1" step="0.1">
-        <span class="unit-label" id="base-unit-label">g</span>
+        <span class="unit-label" id="base-unit-label"></span>
       </div>
     </div>
     <div style="height:12px"></div>
@@ -439,6 +439,12 @@
   let ingredients = [];
   let baseIdx = '';
   let activeNameRow = -1;
+
+  const unitDefaults = {
+    '牛乳': 'ml', 'ぬるま湯': 'ml', '水': 'ml', '豆乳': 'ml',
+    '米油': 'ml', 'オリーブオイル': 'ml', 'なたね油': 'ml', '生クリーム': 'ml',
+    '卵': '個',
+  };
 
   const commonIngredients = [
     '米粉', 'ドライイースト', '砂糖', '塩', 'オリーブオイル', 'バター', '無塩バター',
@@ -495,6 +501,7 @@
   function selectName(name) {
     if (activeNameRow < 0) return;
     ingredients[activeNameRow].name = name;
+    if (unitDefaults[name]) ingredients[activeNameRow].unit = unitDefaults[name];
     closeNameSheet();
     renderList();
     updateBaseBtn();
@@ -542,6 +549,7 @@
     } else {
       txt.textContent = '-- 材料を選択 --';
       btn.classList.add('placeholder');
+      document.getElementById('base-unit-label').textContent = '';
       baseIdx = '';
     }
   }
