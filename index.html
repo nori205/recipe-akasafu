@@ -137,57 +137,19 @@
     .add-btn:active { background: #eedfc5; }
 
     /* 作り方 */
-    .step-row {
-      display: flex;
-      gap: 8px;
-      align-items: flex-start;
-      margin-bottom: 8px;
-    }
-    .step-num {
-      flex: 0 0 24px;
-      width: 24px;
-      height: 24px;
-      background: #c8860a;
-      color: white;
-      border-radius: 50%;
-      font-size: 0.75rem;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: 10px;
-      flex-shrink: 0;
-    }
-    .step-input {
-      flex: 1;
-      min-width: 0;
-      padding: 10px 12px;
+    .steps-textarea {
+      width: 100%;
+      min-height: 160px;
+      padding: 12px 14px;
       border: 1px solid #ddd;
       border-radius: 8px;
       font-size: 0.95rem;
+      font-family: inherit;
       background: #fafafa;
-      resize: none;
-      line-height: 1.5;
-      min-height: 42px;
-      overflow: hidden;
+      resize: vertical;
+      line-height: 1.7;
     }
-    .step-input:focus { outline: none; border-color: #c8860a; }
-    .step-del-btn {
-      flex: 0 0 32px;
-      width: 32px;
-      height: 32px;
-      background: #fee;
-      border: 1px solid #fcc;
-      border-radius: 50%;
-      color: #c44;
-      font-size: 1.1rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: 5px;
-      flex-shrink: 0;
-    }
+    .steps-textarea:focus { outline: none; border-color: #c8860a; }
 
     /* 材料名サジェスト */
     #suggestions {
@@ -443,8 +405,7 @@
   <!-- 作り方 -->
   <div class="card">
     <h2>② 作り方</h2>
-    <div id="step-list"></div>
-    <button class="add-btn" onclick="addStep()">＋ 手順を追加</button>
+    <textarea class="steps-textarea" id="steps-textarea" placeholder="作り方を自由に入力してください&#10;&#10;例）&#10;1. 米粉・砂糖・塩・ドライイーストをボウルに入れて混ぜる&#10;2. ぬるま湯を少しずつ加えてこねる&#10;3. 型に入れて発酵させる（40℃ 60分）&#10;4. 180℃で25分焼く"></textarea>
   </div>
 
   <!-- 量の調整 -->
@@ -503,7 +464,6 @@
 
 <script>
   let ingredients = [];
-  let steps = [];
   let baseIdx = '';
 
   const commonIngredients = [
@@ -637,45 +597,6 @@
     updateBaseBtn();
   }
 
-  // ---- 作り方 ----
-
-  function renderSteps() {
-    const list = document.getElementById('step-list');
-    list.innerHTML = '';
-    steps.forEach((text, i) => {
-      const row = document.createElement('div');
-      row.className = 'step-row';
-      row.innerHTML = `
-        <span class="step-num">${i + 1}</span>
-        <textarea class="step-input" rows="1" placeholder="手順を入力"
-          oninput="steps[${i}]=this.value; autoResize(this)"
-          onblur="steps[${i}]=this.value"
-        >${escHtml(text)}</textarea>
-        <button class="step-del-btn" onclick="removeStep(${i})">×</button>
-      `;
-      list.appendChild(row);
-      const ta = row.querySelector('textarea');
-      setTimeout(() => autoResize(ta), 0);
-    });
-  }
-
-  function addStep() {
-    steps.push('');
-    renderSteps();
-    const tas = document.querySelectorAll('#step-list .step-input');
-    if (tas.length) tas[tas.length - 1].focus();
-  }
-
-  function removeStep(i) {
-    steps.splice(i, 1);
-    renderSteps();
-  }
-
-  function autoResize(el) {
-    el.style.height = 'auto';
-    el.style.height = el.scrollHeight + 'px';
-  }
-
   // ---- 計算 ----
 
   function calculate() {
@@ -724,18 +645,13 @@
     });
 
     // 作り方を結果に表示
+    const stepsText = document.getElementById('steps-textarea').value.trim();
     const stepsArea = document.getElementById('result-steps-area');
-    const filledSteps = steps.filter(s => s.trim());
-    if (filledSteps.length > 0) {
+    if (stepsText) {
       stepsArea.innerHTML = `
         <div class="result-steps">
           <h3>作り方</h3>
-          ${filledSteps.map((s, i) => `
-            <div class="result-step-item">
-              <span class="result-step-num">${i + 1}</span>
-              <span>${escHtml(s)}</span>
-            </div>
-          `).join('')}
+          <div style="font-size:0.92rem; line-height:1.8; white-space:pre-wrap;">${escHtml(stepsText)}</div>
         </div>`;
     } else {
       stepsArea.innerHTML = '';
@@ -765,9 +681,7 @@
     { name: '', amount: 0, unit: 'g' },
     { name: '', amount: 0, unit: 'g' },
   ];
-  steps = ['', ''];
   renderList();
-  renderSteps();
 </script>
 
 </body>
