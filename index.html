@@ -42,6 +42,57 @@
       border-bottom: 2px solid #f0e0c0;
     }
 
+    /* 保存済みレシピ */
+    .saved-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    .saved-header.open { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #f0e0c0; }
+    .saved-toggle { font-size: 0.8rem; color: #c8860a; }
+    .saved-list { display: none; }
+    .saved-list.open { display: block; }
+    .saved-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0ead8;
+    }
+    .saved-item:last-child { border-bottom: none; }
+    .saved-item-info {
+      flex: 1;
+      min-width: 0;
+      cursor: pointer;
+    }
+    .saved-item-name {
+      font-size: 0.95rem;
+      font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .saved-item-date { font-size: 0.75rem; color: #aaa; margin-top: 2px; }
+    .saved-del-btn {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      background: #fee;
+      border: 1px solid #fcc;
+      border-radius: 50%;
+      color: #c44;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .saved-empty { font-size: 0.88rem; color: #bbb; text-align: center; padding: 12px 0; }
+
     /* レシピ名 */
     .recipe-name-input {
       width: 100%;
@@ -295,6 +346,22 @@
     }
     .calc-btn:active { background: #a06808; }
 
+    /* 保存ボタン */
+    .save-btn {
+      width: 100%;
+      padding: 14px;
+      background: white;
+      color: #c8860a;
+      border: 2px solid #c8860a;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      letter-spacing: 0.05em;
+    }
+    .save-btn:active { background: #fff8e8; }
+
     /* 結果 */
     #result-card { display: none; }
     .result-ratio {
@@ -346,6 +413,16 @@
       font-size: 0.9rem;
       margin-top: 8px;
     }
+    .success-msg {
+      background: #f0fff4;
+      border: 1px solid #9d9;
+      color: #282;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-top: 8px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -356,6 +433,15 @@
 </header>
 
 <div class="container">
+
+  <!-- 保存済みレシピ -->
+  <div class="card" id="saved-card">
+    <h2 class="saved-header" id="saved-header" onclick="toggleSaved()">
+      <span>📂 保存済みレシピ</span>
+      <span class="saved-toggle" id="saved-toggle">▼ 開く</span>
+    </h2>
+    <div class="saved-list" id="saved-list"></div>
+  </div>
 
   <!-- レシピ入力 -->
   <div class="card">
@@ -412,6 +498,8 @@
       <tbody id="result-body"></tbody>
     </table>
     <div id="result-steps-area"></div>
+    <button class="save-btn" onclick="saveRecipe()">⭐ このレシピを保存する</button>
+    <div id="save-msg"></div>
   </div>
 
 </div>
@@ -454,6 +542,91 @@
     'ヨーグルト', '生クリーム', 'ベーキングパウダー', 'アーモンドプードル',
     'レーズン', 'クルミ', 'チョコチップ', '片栗粉', '上新粉'
   ];
+
+  // ---- 保存済みレシピ ----
+
+  function loadSavedList() {
+    const saved = getSaved();
+    const listEl = document.getElementById('saved-list');
+    if (saved.length === 0) {
+      listEl.innerHTML = '<div class="saved-empty">まだ保存されたレシピはありません</div>';
+    } else {
+      listEl.innerHTML = saved.map((r, i) => `
+        <div class="saved-item">
+          <div class="saved-item-info" onclick="loadRecipe(${i})">
+            <div class="saved-item-name">${escHtml(r.name || '名前なし')}</div>
+            <div class="saved-item-date">${r.date} 保存</div>
+          </div>
+          <button class="saved-del-btn" onclick="deleteRecipe(${i})">×</button>
+        </div>
+      `).join('');
+    }
+  }
+
+  function getSaved() {
+    try { return JSON.parse(localStorage.getItem('rice_recipes') || '[]'); } catch { return []; }
+  }
+
+  function toggleSaved() {
+    const list = document.getElementById('saved-list');
+    const toggle = document.getElementById('saved-toggle');
+    const header = document.getElementById('saved-header');
+    const isOpen = list.classList.toggle('open');
+    header.classList.toggle('open', isOpen);
+    toggle.textContent = isOpen ? '▲ 閉じる' : '▼ 開く';
+    if (isOpen) loadSavedList();
+  }
+
+  function saveRecipe() {
+    const name = document.getElementById('recipe-name').value.trim() || '名前なし';
+    const steps = document.getElementById('steps-textarea').value;
+    const baseAmount = parseFloat(document.getElementById('base-amount').value) || 0;
+    const now = new Date();
+    const date = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+
+    const recipe = { name, ingredients: JSON.parse(JSON.stringify(ingredients)), steps, baseIdx, baseAmount, date };
+    const saved = getSaved();
+    saved.unshift(recipe);
+    localStorage.setItem('rice_recipes', JSON.stringify(saved));
+
+    const msg = document.getElementById('save-msg');
+    msg.innerHTML = '<div class="success-msg">✓ 保存しました！</div>';
+    setTimeout(() => { msg.innerHTML = ''; }, 2500);
+
+    // 一覧が開いていれば更新
+    if (document.getElementById('saved-list').classList.contains('open')) loadSavedList();
+  }
+
+  function loadRecipe(idx) {
+    const saved = getSaved();
+    const r = saved[idx];
+    if (!r) return;
+
+    document.getElementById('recipe-name').value = r.name || '';
+    ingredients = r.ingredients ? JSON.parse(JSON.stringify(r.ingredients)) : [];
+    document.getElementById('steps-textarea').value = r.steps || '';
+    baseIdx = r.baseIdx || '';
+    document.getElementById('base-amount').value = r.baseAmount || '';
+    renderList();
+    updateBaseBtn();
+    document.getElementById('result-card').style.display = 'none';
+
+    // 閉じてページ上部へ
+    const list = document.getElementById('saved-list');
+    const toggle = document.getElementById('saved-toggle');
+    const header = document.getElementById('saved-header');
+    list.classList.remove('open');
+    header.classList.remove('open');
+    toggle.textContent = '▼ 開く';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function deleteRecipe(idx) {
+    const saved = getSaved();
+    saved.splice(idx, 1);
+    localStorage.setItem('rice_recipes', JSON.stringify(saved));
+    loadSavedList();
+  }
 
   // ---- 材料名シート ----
 
@@ -652,6 +825,7 @@
       stepsArea.innerHTML = '';
     }
 
+    document.getElementById('save-msg').innerHTML = '';
     document.getElementById('result-card').style.display = 'block';
     document.getElementById('result-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -674,6 +848,7 @@
     { name: '', amount: 0, unit: 'g' },
   ];
   renderList();
+  loadSavedList();
 </script>
 
 </body>
