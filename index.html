@@ -6,7 +6,7 @@
   <title>あるもん</title>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#c8860a">
+  <meta name="theme-color" content="#a47251">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="あるもん">
@@ -16,14 +16,14 @@
 
     body {
       font-family: 'M PLUS Rounded 1c', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
-      background: #fdf6ee;
+      background: #faf7f0;
       color: #333;
       min-height: 100vh;
       padding-bottom: 40px;
     }
 
     header {
-      background: #c8860a;
+      background: #a47251;
       color: white;
       padding: 16px 20px;
       text-align: center;
@@ -43,10 +43,10 @@
     .card h2 {
       font-size: 0.95rem;
       font-weight: bold;
-      color: #c8860a;
+      color: #a47251;
       margin-bottom: 12px;
       padding-bottom: 8px;
-      border-bottom: 2px solid #f0e0c0;
+      border-bottom: 2px solid #f0d8a1;
     }
 
     /* 保存済みレシピ */
@@ -59,8 +59,8 @@
       padding-bottom: 0;
       border-bottom: none;
     }
-    .saved-header.open { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #f0e0c0; }
-    .saved-toggle { font-size: 0.8rem; color: #c8860a; }
+    .saved-header.open { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #f0d8a1; }
+    .saved-toggle { font-size: 0.8rem; color: #a47251; }
     .saved-list { display: none; }
     .saved-list.open { display: block; }
     .saved-item {
@@ -68,7 +68,7 @@
       align-items: center;
       gap: 8px;
       padding: 10px 0;
-      border-bottom: 1px solid #f0ead8;
+      border-bottom: 1px solid #f0d8a1;
     }
     .saved-item:last-child { border-bottom: none; }
     .saved-item-info {
@@ -111,9 +111,9 @@
       font-size: 0.82rem;
       border-radius: 8px;
       cursor: pointer;
-      border: 1px solid #d0a060;
+      border: 1px solid #dd9e59;
       background: #fff8ee;
-      color: #a06020;
+      color: #a47251;
       text-align: center;
     }
     .backup-btn:active { background: #ffeedd; }
@@ -128,7 +128,7 @@
       background: #fafafa;
       margin-bottom: 14px;
     }
-    .recipe-name-input:focus { outline: none; border-color: #c8860a; }
+    .recipe-name-input:focus { outline: none; border-color: #a47251; }
 
     /* 材料入力行 */
     .ingredient-row {
@@ -208,15 +208,15 @@
     .add-btn {
       width: 100%;
       padding: 11px;
-      background: #f5ead8;
-      border: 2px dashed #c8a060;
+      background: #f0d8a1;
+      border: 2px dashed #dd9e59;
       border-radius: 8px;
-      color: #a06020;
+      color: #a47251;
       font-size: 0.95rem;
       cursor: pointer;
       margin-top: 4px;
     }
-    .add-btn:active { background: #eedfc5; }
+    .add-btn:active { background: #e4c880; }
 
     /* 作り方 */
     .steps-textarea {
@@ -231,14 +231,14 @@
       resize: vertical;
       line-height: 1.7;
     }
-    .steps-textarea:focus { outline: none; border-color: #c8860a; }
+    .steps-textarea:focus { outline: none; border-color: #a47251; }
 
     /* 量調整 */
     .adjust-note {
       font-size: 0.82rem;
       color: #888;
-      background: #fff8e8;
-      border: 1px solid #f0d888;
+      background: #f0d8a1;
+      border: 1px solid #dd9e59;
       border-radius: 8px;
       padding: 10px 12px;
       margin-bottom: 14px;
@@ -259,7 +259,7 @@
       flex: 2;
       min-width: 0;
       padding: 12px 10px;
-      border: 2px solid #c8860a;
+      border: 2px solid #a47251;
       border-radius: 8px;
       font-size: 1rem;
       background: #fff;
@@ -270,13 +270,13 @@
       justify-content: space-between;
       align-items: center;
     }
-    .base-custom-btn .arrow { color: #c8860a; font-size: 0.8rem; margin-left: 4px; flex-shrink: 0; }
+    .base-custom-btn .arrow { color: #a47251; font-size: 0.8rem; margin-left: 4px; flex-shrink: 0; }
     .base-custom-btn.placeholder { color: #aaa; }
     .base-row input[type="number"] {
       flex: 1;
       min-width: 0;
       padding: 12px 8px;
-      border: 2px solid #c8860a;
+      border: 2px solid #a47251;
       border-radius: 8px;
       font-size: 1rem;
       text-align: right;
@@ -317,13 +317,13 @@
       padding: 14px 16px 10px;
       font-size: 0.95rem;
       font-weight: bold;
-      color: #c8860a;
-      border-bottom: 1px solid #f0e0c0;
+      color: #a47251;
+      border-bottom: 1px solid #f0d8a1;
       flex-shrink: 0;
     }
     .sheet-search {
       padding: 10px 14px;
-      border-bottom: 1px solid #f0e0c0;
+      border-bottom: 1px solid #f0d8a1;
       flex-shrink: 0;
     }
     .sheet-search input {
@@ -334,7 +334,7 @@
       font-size: 1rem;
       background: #fafafa;
     }
-    .sheet-search input:focus { outline: none; border-color: #c8860a; }
+    .sheet-search input:focus { outline: none; border-color: #a47251; }
     .sheet-list { overflow-y: auto; flex: 1; }
     .sheet-item {
       padding: 14px 20px;
@@ -343,9 +343,9 @@
       cursor: pointer;
     }
     .sheet-item:last-child { border-bottom: none; }
-    .sheet-item:active { background: #fff8e8; }
-    .sheet-item.selected { color: #c8860a; font-weight: bold; background: #fff8e8; }
-    .sheet-item.custom { color: #c8860a; }
+    .sheet-item:active { background: #f0d8a1; }
+    .sheet-item.selected { color: #a47251; font-weight: bold; background: #f0d8a1; }
+    .sheet-item.custom { color: #a47251; }
     .sheet-cancel {
       padding: 14px;
       text-align: center;
@@ -361,27 +361,27 @@
       gap: 6px;
       padding: 8px 14px;
       flex-shrink: 0;
-      border-bottom: 1px solid #f0e0c0;
-      background: #fdf8f2;
+      border-bottom: 1px solid #f0d8a1;
+      background: #faf5ec;
     }
     .history-chips:empty { display: none; }
     .history-chip {
       flex-shrink: 0;
       padding: 5px 13px;
       background: white;
-      border: 1px solid #d0a060;
+      border: 1px solid #dd9e59;
       border-radius: 20px;
       font-size: 0.85rem;
-      color: #a06020;
+      color: #a47251;
       cursor: pointer;
       white-space: nowrap;
     }
-    .history-chip:active { background: #fff0d0; }
+    .history-chip:active { background: #e4c880; }
 
     .calc-btn {
       width: 100%;
       padding: 14px;
-      background: #c8860a;
+      background: #a47251;
       color: white;
       border: none;
       border-radius: 10px;
@@ -391,15 +391,15 @@
       margin-top: 4px;
       letter-spacing: 0.05em;
     }
-    .calc-btn:active { background: #a06808; }
+    .calc-btn:active { background: #7d5338; }
 
     /* 保存ボタン */
     .save-btn {
       width: 100%;
       padding: 14px;
       background: white;
-      color: #c8860a;
-      border: 2px solid #c8860a;
+      color: #a47251;
+      border: 2px solid #a47251;
       border-radius: 10px;
       font-size: 1rem;
       font-weight: bold;
@@ -407,7 +407,7 @@
       margin-top: 10px;
       letter-spacing: 0.05em;
     }
-    .save-btn:active { background: #fff8e8; }
+    .save-btn:active { background: #f0d8a1; }
 
     /* はかり精度セレクター */
     .precision-selector { margin-bottom: 16px; }
@@ -419,7 +419,7 @@
     }
     .precision-buttons {
       display: flex;
-      border: 2px solid #c8860a;
+      border: 2px solid #a47251;
       border-radius: 10px;
       overflow: hidden;
     }
@@ -429,8 +429,8 @@
       min-height: 52px;
       background: white;
       border: none;
-      border-right: 1px solid #c8860a;
-      color: #c8860a;
+      border-right: 1px solid #a47251;
+      color: #a47251;
       font-size: 0.82rem;
       line-height: 1.4;
       cursor: pointer;
@@ -438,11 +438,11 @@
     }
     .prec-btn:last-child { border-right: none; }
     .prec-btn.active {
-      background: #c8860a;
+      background: #a47251;
       color: white;
       font-weight: bold;
     }
-    .prec-btn:active:not(.active) { background: #fff3e0; }
+    .prec-btn:active:not(.active) { background: #f0d8a1; }
     .prec-btn small {
       display: block;
       font-size: 0.72rem;
@@ -459,11 +459,11 @@
       margin-bottom: 12px;
     }
     .result-ratio span {
-      background: #fff3e0;
+      background: #f0d8a1;
       padding: 3px 10px;
       border-radius: 20px;
-      border: 1px solid #f0c060;
-      color: #a06020;
+      border: 1px solid #dd9e59;
+      color: #a47251;
       font-weight: bold;
     }
     .result-table { width: 100%; border-collapse: collapse; }
@@ -478,19 +478,19 @@
     .result-table th:last-child { text-align: right; }
     .result-table td {
       padding: 10px 8px;
-      border-bottom: 1px solid #f0ead8;
+      border-bottom: 1px solid #f0d8a1;
       font-size: 1rem;
     }
     .result-table td:last-child { text-align: right; font-weight: bold; }
-    .result-table tr.highlight td { background: #fff8e8; color: #c8860a; font-weight: bold; }
+    .result-table tr.highlight td { background: #dcf0c3; color: #a47251; font-weight: bold; }
     .result-table tr:last-child td { border-bottom: none; }
     .original-val { font-size: 0.78rem; color: #bbb; display: block; }
     .result-steps {
       margin-top: 16px;
       padding-top: 14px;
-      border-top: 2px solid #f0e0c0;
+      border-top: 2px solid #f0d8a1;
     }
-    .result-steps h3 { font-size: 0.88rem; color: #c8860a; font-weight: bold; margin-bottom: 10px; }
+    .result-steps h3 { font-size: 0.88rem; color: #a47251; font-weight: bold; margin-bottom: 10px; }
 
     /* 注意書き */
     .ingredient-note {
@@ -499,7 +499,7 @@
       color: #999;
       margin-top: 16px;
       padding-top: 12px;
-      border-top: 1px solid #f0ead8;
+      border-top: 1px solid #f0d8a1;
       line-height: 1.5;
     }
 
@@ -513,9 +513,9 @@
       margin-top: 8px;
     }
     .success-msg {
-      background: #f0fff4;
-      border: 1px solid #9d9;
-      color: #282;
+      background: #dcf0c3;
+      border: 1px solid #a0d080;
+      color: #3a6e2a;
       padding: 10px 14px;
       border-radius: 8px;
       font-size: 0.9rem;
