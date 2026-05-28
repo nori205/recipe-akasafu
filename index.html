@@ -49,15 +49,60 @@
       align-items: center;
       margin-bottom: 8px;
     }
-    .ingredient-row input[type="text"] {
+
+    /* 材料名入力＋候補ドロップダウン */
+    .name-wrap {
       flex: 2;
       min-width: 0;
-      padding: 10px 12px;
+      position: relative;
+    }
+    .name-wrap input[type="text"] {
+      width: 100%;
+      padding: 10px 32px 10px 10px;
       border: 1px solid #ddd;
       border-radius: 8px;
       font-size: 1rem;
       background: #fafafa;
+      box-sizing: border-box;
     }
+    .name-toggle {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 32px;
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .name-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      z-index: 200;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .name-dropdown.open { display: block; }
+    .name-option {
+      padding: 11px 14px;
+      font-size: 0.95rem;
+      border-bottom: 1px solid #f5f0e8;
+      cursor: pointer;
+    }
+    .name-option:last-child { border-bottom: none; }
+    .name-option:active { background: #fff3e0; }
     .ingredient-row input[type="number"] {
       flex: 1;
       min-width: 0;
@@ -325,28 +370,6 @@
       <span>量</span>
       <span>単位</span>
     </div>
-    <datalist id="ingredient-names">
-      <option value="米粉">
-      <option value="強力粉">
-      <option value="小麦粉">
-      <option value="薄力粉">
-      <option value="中力粉">
-      <option value="砂糖">
-      <option value="塩">
-      <option value="バター">
-      <option value="牛乳">
-      <option value="水">
-      <option value="卵">
-      <option value="ドライイースト">
-      <option value="イースト">
-      <option value="ベーキングパウダー">
-      <option value="重曹">
-      <option value="ヨーグルト">
-      <option value="はちみつ">
-      <option value="油">
-      <option value="オリーブオイル">
-      <option value="豆乳">
-    </datalist>
     <div id="ingredient-list"></div>
     <button class="add-btn" onclick="addRow()">＋ 材料を追加</button>
   </div>
@@ -419,6 +442,8 @@
   // はかり精度（localStorage から復元、デフォルト 1g）
   let precision = localStorage.getItem('scalePrecision') || '1';
 
+  const PRESET_NAMES = ['米粉','強力粉','小麦粉','薄力粉','中力粉','砂糖','塩','バター','牛乳','水','卵','ドライイースト','イースト','ベーキングパウダー','重曹','ヨーグルト','はちみつ','油','オリーブオイル','豆乳'];
+
   // 【1】丸め処理を精度設定に統一
   function fmt(v) {
     if (v === 0) return '0';
@@ -452,10 +477,16 @@
     ingredients.forEach((ing, i) => {
       const row = document.createElement('div');
       row.className = 'ingredient-row';
+      const opts = PRESET_NAMES.map(n =>
+        `<div class="name-option" onclick="selectName(${i},'${n}')">${n}</div>`
+      ).join('');
       row.innerHTML = `
-        <input type="text" placeholder="材料名" value="${escHtml(ing.name)}"
-          list="ingredient-names"
-          oninput="ingredients[${i}].name=this.value; updateSelect()">
+        <div class="name-wrap">
+          <input type="text" placeholder="材料名" value="${escHtml(ing.name)}"
+            oninput="ingredients[${i}].name=this.value; updateSelect()">
+          <button class="name-toggle" onclick="toggleNameDD(event,${i})">▾</button>
+          <div class="name-dropdown" id="name-dd-${i}">${opts}</div>
+        </div>
         <input type="number" placeholder="量" value="${ing.amount || ''}" min="0" step="0.1"
           oninput="ingredients[${i}].amount=parseFloat(this.value)||0">
         <select class="unit-select" onchange="ingredients[${i}].unit=this.value; updateSelect()">
@@ -467,6 +498,27 @@
       list.appendChild(row);
     });
   }
+
+  function toggleNameDD(e, i) {
+    e.stopPropagation();
+    const dd = document.getElementById(`name-dd-${i}`);
+    const isOpen = dd.classList.contains('open');
+    closeAllNameDD();
+    if (!isOpen) dd.classList.add('open');
+  }
+
+  function closeAllNameDD() {
+    document.querySelectorAll('.name-dropdown').forEach(d => d.classList.remove('open'));
+  }
+
+  function selectName(i, name) {
+    ingredients[i].name = name;
+    closeAllNameDD();
+    renderList();
+    updateSelect();
+  }
+
+  document.addEventListener('click', closeAllNameDD);
 
   function escHtml(s) {
     return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
