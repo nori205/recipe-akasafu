@@ -503,6 +503,35 @@
       line-height: 1.5;
     }
 
+    .yeast-btn {
+      width: 100%;
+      padding: 16px;
+      background: #dd9e59;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.05rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 4px;
+      letter-spacing: 0.03em;
+    }
+    .yeast-btn:active { background: #c08840; }
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 14px 0;
+      font-size: 0.82rem;
+      color: #aaa;
+    }
+    .or-divider::before, .or-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #f0d8a1;
+    }
+
     .error-msg {
       background: #fee;
       border: 1px solid #fcc;
@@ -572,13 +601,14 @@
   <!-- 量の調整 -->
   <div class="card">
     <h2>③ 量を調整する</h2>
+    <button class="yeast-btn" onclick="calcYeast()">🧪 ドライイースト1袋（3g）で計算</button>
+    <div class="or-divider">または</div>
     <div class="adjust-note">
       手持ちの材料の量を基準に、レシピ全体を自動で計算します。<br>
-      例）ドライイーストの個包装が3gなのにレシピが2g → ドライイーストを基準に3gと入力<br>
       例）バターが100gしかないのにレシピが120g → バターを基準に100gと入力
     </div>
     <div class="base-select-area">
-      <label>基準にする材料</label>
+      <label>別の材料を基準にする</label>
       <div class="base-row">
         <button type="button" class="base-custom-btn placeholder" id="base-custom-btn" onclick="openBaseSheet()">
           <span id="base-btn-text">-- 材料を選択 --</span>
@@ -1018,6 +1048,19 @@
   }
 
   // ---- 計算 ----
+
+  function calcYeast() {
+    const idx = ingredients.findIndex(ing => ing.name && ing.name.includes('イースト'));
+    if (idx === -1) {
+      document.getElementById('error-area').innerHTML = '<div class="error-msg">①にドライイーストを入力してから押してください。</div>';
+      document.getElementById('result-card').style.display = 'none';
+      return;
+    }
+    baseIdx = String(idx);
+    updateBaseBtn();
+    document.getElementById('base-amount').value = '3';
+    calculate();
+  }
 
   function calculate() {
     const errorArea = document.getElementById('error-area');
