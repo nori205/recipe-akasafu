@@ -4,17 +4,17 @@
   "description": "あるものでレシピを自動計算",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#fdf6ee",
-  "theme_color": "#c8860a",
+  "background_color": "#faf7f0",
+  "theme_color": "#a47251",
   "lang": "ja",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "icon-192-v2.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon-512.png",
+      "src": "icon-512-v2.png",
       "sizes": "512x512",
       "type": "image/png"
     }
