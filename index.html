@@ -504,6 +504,14 @@
       line-height: 1.5;
     }
 
+    .gram-note {
+      display: block;
+      font-size: 0.75rem;
+      color: #5a8a3a;
+      font-weight: normal;
+      margin-top: 2px;
+    }
+
     .yeast-btn {
       width: 100%;
       padding: 16px;
@@ -657,7 +665,7 @@
       <tbody id="result-body"></tbody>
     </table>
     <div id="result-steps-area"></div>
-    <p class="ingredient-note">イーストと塩は正確に量ってね。他はざっくりでもOK🤓</p>
+    <p class="ingredient-note">イーストと塩は正確に量ってね。他はざっくりでもOK🤓<br><span style="color:#5a8a3a;">緑色の ≈ Xg は大さじ・小さじのグラム換算の目安です。<br>材料の状態やメーカーによって多少異なります。</span></p>
     <button class="save-btn" onclick="saveRecipe()">⭐ このレシピを保存する</button>
     <div id="save-msg"></div>
   </div>
@@ -691,6 +699,33 @@
   let activeNameRow = -1;
   let lastRatio = 1;
   let lastBaseIdxNum = -1;
+
+  // 大さじ1あたりのグラム数（材料名で部分一致）
+  const tbspToGram = {
+    '水': 15, 'ぬるま湯': 15, '牛乳': 15, '豆乳': 15, '生クリーム': 15,
+    'ヨーグルト': 17,
+    'オリーブオイル': 12, '米油': 12, 'なたね油': 12,
+    'はちみつ': 21, 'メープルシロップ': 21,
+    '醤油': 18, '塩': 18,
+    '砂糖': 9, 'グラニュー糖': 12,
+    '薄力粉': 9, '強力粉': 9, '小麦粉': 9, '米粉': 9,
+    '片栗粉': 9, '上新粉': 9, 'タピオカ粉': 9, 'コーンスターチ': 9,
+    'アーモンドプードル': 6, 'スキムミルク': 6, 'シナモン': 6,
+    'ベーキングパウダー': 12, 'ドライイースト': 9,
+    'サイリウムハスク': 8,
+    'バター': 12, '無塩バター': 12,
+  };
+
+  function getGramEquiv(name, amount, unit) {
+    if (!['大さじ', '小さじ', 'カップ'].includes(unit)) return null;
+    const key = Object.keys(tbspToGram).find(k => name.includes(k));
+    if (!key) return null;
+    const gPerTbsp = tbspToGram[key];
+    if (unit === '大さじ') return amount * gPerTbsp;
+    if (unit === '小さじ') return amount * gPerTbsp / 3;
+    if (unit === 'カップ') return amount * gPerTbsp * 200 / 15;
+    return null;
+  }
 
   // はかり精度（localStorage から復元、デフォルト 1g）
   let precision = localStorage.getItem('scalePrecision') || '1';
@@ -1112,10 +1147,12 @@
       const newAmount = ing.amount * lastRatio;
       const tr = document.createElement('tr');
       if (i === lastBaseIdxNum) tr.className = 'highlight';
+      const gramEquiv = getGramEquiv(ing.name, newAmount, ing.unit);
+      const gramNote = gramEquiv !== null ? `<span class="gram-note">≈ ${fmt(gramEquiv)}g</span>` : '';
       tr.innerHTML = `
         <td>${escHtml(ing.name)}</td>
         <td><span class="original-val">${ing.amount}${escHtml(ing.unit)}</span></td>
-        <td>${fmt(newAmount)} ${escHtml(ing.unit)}</td>
+        <td>${fmt(newAmount)} ${escHtml(ing.unit)}${gramNote}</td>
       `;
       tbody.appendChild(tr);
     });
