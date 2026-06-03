@@ -496,6 +496,37 @@
     .result-steps h3 { font-size: 0.88rem; color: #a47251; font-weight: bold; margin-bottom: 10px; }
 
     /* 注意書き */
+    .frac-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+      padding: 6px 0;
+    }
+    .frac-row-label {
+      font-size: 0.78rem;
+      color: #aaa;
+      flex-shrink: 0;
+    }
+    .frac-chip {
+      padding: 5px 13px;
+      background: #fff8ee;
+      border: 1px solid #dd9e59;
+      border-radius: 16px;
+      font-size: 0.9rem;
+      color: #a47251;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .frac-chip:active { background: #f0d8a1; }
+    .unit-tip {
+      font-size: 0.78rem;
+      color: #aaa;
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+
     .ingredient-note {
       text-align: center;
       font-size: 0.82rem;
@@ -599,6 +630,14 @@
       <span>量</span>
       <span>単位</span>
     </div>
+    <div class="frac-row">
+      <span class="frac-row-label">分数ボタン：</span>
+      <button class="frac-chip" onclick="insertFraction('1/2')">1/2</button>
+      <button class="frac-chip" onclick="insertFraction('1/3')">1/3</button>
+      <button class="frac-chip" onclick="insertFraction('1/4')">1/4</button>
+      <button class="frac-chip" onclick="insertFraction('1/8')">1/8</button>
+    </div>
+    <p class="unit-tip">量の欄をタップしてから分数ボタンを押すと入力されます。<br>g以外に大さじ・小さじ・mlなどは右の単位欄で切り替えられます。</p>
     <div id="ingredient-list"></div>
     <button class="add-btn" onclick="addRow()">＋ 材料を追加</button>
   </div>
@@ -699,6 +738,7 @@
   let ingredients = [];
   let baseIdx = '';
   let activeNameRow = -1;
+  let activeAmountRow = -1;
   let lastRatio = 1;
   let lastBaseIdxNum = -1;
 
@@ -717,6 +757,14 @@
     'サイリウムハスク': 8,
     'バター': 12, '無塩バター': 12,
   };
+
+  function insertFraction(frac) {
+    if (activeAmountRow < 0) activeAmountRow = 0;
+    ingredients[activeAmountRow].amountStr = frac;
+    ingredients[activeAmountRow].amount = parseFraction(frac);
+    const inputs = document.querySelectorAll('.ingredient-row input[type="text"]');
+    if (inputs[activeAmountRow]) inputs[activeAmountRow].value = frac;
+  }
 
   function parseFraction(str) {
     const s = String(str || '').trim();
@@ -1069,7 +1117,7 @@
           ${ing.name ? escHtml(ing.name) : '例：小麦粉・砂糖・バター…'}
         </button>
         <input type="text" inputmode="decimal" placeholder="例：120・1/2" value="${ing.amountStr !== undefined ? ing.amountStr : (ing.amount || '')}"
-          onfocus="setTimeout(()=>this.scrollIntoView({behavior:'smooth',block:'center'}),400)"
+          onfocus="activeAmountRow=${i}; setTimeout(()=>this.scrollIntoView({behavior:'smooth',block:'center'}),400)"
           oninput="ingredients[${i}].amountStr=this.value; ingredients[${i}].amount=parseFraction(this.value)">
         <select class="unit-select" onchange="ingredients[${i}].unit=this.value; updateBaseBtn()">
           ${['g','ml','大さじ','小さじ','個','本','枚','カップ','cc','kg','適量'].map(u =>
