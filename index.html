@@ -623,7 +623,7 @@
           <span id="base-btn-text">-- 材料を選択 --</span>
           <span class="arrow">▼</span>
         </button>
-        <input type="number" id="base-amount" placeholder="量" min="0.1" step="0.1"
+        <input type="text" inputmode="decimal" id="base-amount" placeholder="量・1/2可"
           onfocus="setTimeout(()=>this.scrollIntoView({behavior:'smooth',block:'center'}),400)">
         <select class="unit-select" id="base-unit-select" onchange="updateBaseUnit(this.value)" style="display:none">
           <option>g</option><option>ml</option><option>大さじ</option><option>小さじ</option>
@@ -715,6 +715,16 @@
     'サイリウムハスク': 8,
     'バター': 12, '無塩バター': 12,
   };
+
+  function parseFraction(str) {
+    const s = String(str || '').trim();
+    const m = s.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
+    if (m) {
+      const d = parseFloat(m[2]);
+      return d ? parseFloat(m[1]) / d : 0;
+    }
+    return parseFloat(s) || 0;
+  }
 
   function getGramEquiv(name, amount, unit) {
     if (!['大さじ', '小さじ', 'カップ'].includes(unit)) return null;
@@ -1056,9 +1066,9 @@
         <button class="name-btn${ing.name ? '' : ' empty'}" onclick="openNameSheet(${i})">
           ${ing.name ? escHtml(ing.name) : '例：小麦粉・砂糖・バター…'}
         </button>
-        <input type="number" placeholder="例：120" value="${ing.amount || ''}" min="0" step="0.1"
+        <input type="text" inputmode="decimal" placeholder="例：120・1/2" value="${ing.amountStr !== undefined ? ing.amountStr : (ing.amount || '')}"
           onfocus="setTimeout(()=>this.scrollIntoView({behavior:'smooth',block:'center'}),400)"
-          oninput="ingredients[${i}].amount=parseFloat(this.value)||0">
+          oninput="ingredients[${i}].amountStr=this.value; ingredients[${i}].amount=parseFraction(this.value)">
         <select class="unit-select" onchange="ingredients[${i}].unit=this.value; updateBaseBtn()">
           ${['g','ml','大さじ','小さじ','個','本','枚','カップ','cc','kg','適量'].map(u =>
             `<option value="${u}"${ing.unit===u?' selected':''}>${u}</option>`
@@ -1071,7 +1081,7 @@
   }
 
   function addRow() {
-    ingredients.push({ name: '', amount: 0, unit: 'g' });
+    ingredients.push({ name: '', amount: 0, unit: 'g', amountStr: '' });
     renderList();
   }
 
@@ -1103,7 +1113,7 @@
     errorArea.innerHTML = '';
 
     const idx = parseInt(baseIdx);
-    const baseAmount = parseFloat(document.getElementById('base-amount').value);
+    const baseAmount = parseFraction(document.getElementById('base-amount').value);
 
     if (baseIdx === '' || isNaN(idx)) {
       errorArea.innerHTML = '<div class="error-msg">基準にする材料を選んでください。</div>';
@@ -1148,7 +1158,7 @@
       const tr = document.createElement('tr');
       if (i === lastBaseIdxNum) tr.className = 'highlight';
       const gramEquiv = getGramEquiv(ing.name, newAmount, ing.unit);
-      const gramNote = gramEquiv !== null ? `<span class="gram-note">≈ ${fmt(gramEquiv)}g</span>` : '';
+      const gramNote = gramEquiv !== null ? `<span class="gram-note">≈ ${(Math.round(gramEquiv * 10) / 10).toFixed(1)}g</span>` : '';
       tr.innerHTML = `
         <td>${escHtml(ing.name)}</td>
         <td><span class="original-val">${ing.amount}${escHtml(ing.unit)}</span></td>
@@ -1177,9 +1187,9 @@
   // 初期化
   updatePrecisionButtons();
   ingredients = [
-    { name: '', amount: 0, unit: 'g' },
-    { name: '', amount: 0, unit: 'g' },
-    { name: '', amount: 0, unit: 'g' },
+    { name: '', amount: 0, unit: 'g', amountStr: '' },
+    { name: '', amount: 0, unit: 'g', amountStr: '' },
+    { name: '', amount: 0, unit: 'g', amountStr: '' },
   ];
   renderList();
   loadSavedList();
