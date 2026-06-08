@@ -586,6 +586,89 @@
       line-height: 1.5;
     }
 
+    /* 貼り付けシート */
+    .paste-btn {
+      width: 100%;
+      padding: 10px 14px;
+      background: #fff8ee;
+      border: 1px dashed #dd9e59;
+      border-radius: 8px;
+      color: #a47251;
+      font-size: 0.88rem;
+      cursor: pointer;
+      margin-bottom: 14px;
+      text-align: center;
+      font-family: inherit;
+    }
+    .paste-btn:active { background: #f0d8a1; }
+    .paste-sheet-body {
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      gap: 8px;
+      min-height: 0;
+    }
+    .paste-sheet-note {
+      font-size: 0.82rem;
+      color: #888;
+      line-height: 1.6;
+      flex-shrink: 0;
+    }
+    .paste-textarea {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      background: #fafafa;
+      resize: none;
+      line-height: 1.8;
+    }
+    .paste-textarea:focus { outline: none; border-color: #a47251; }
+    .paste-msg {
+      font-size: 0.85rem;
+      min-height: 1.2em;
+      flex-shrink: 0;
+    }
+    .paste-msg.error { color: #c44; }
+    .paste-msg.ok { color: #3a6e2a; }
+    .paste-sheet-btns {
+      display: flex;
+      gap: 10px;
+      padding: 12px 16px 28px;
+      flex-shrink: 0;
+    }
+    .paste-cancel-btn {
+      flex: 1;
+      padding: 13px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      color: #888;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .paste-ok-btn {
+      flex: 2;
+      padding: 13px;
+      background: #a47251;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 0.95rem;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: 0.05em;
+    }
+    .paste-ok-btn:active { background: #7d5338; }
+
     .gram-note {
       display: block;
       font-size: 0.75rem;
@@ -674,6 +757,7 @@
   <div class="card">
     <h2>① 参考レシピを入力</h2>
     <input type="text" class="recipe-name-input" id="recipe-name" placeholder="レシピ名（例：基本の米粉パン、チョコケーキなど）">
+    <button class="paste-btn" onclick="openPasteSheet()">📋 レシピを貼り付けて自動入力</button>
     <div class="col-labels">
       <span>材料名</span>
       <span>量</span>
@@ -777,6 +861,22 @@
   <div class="history-chips" id="history-chips"></div>
   <div class="sheet-list" id="name-list"></div>
   <div class="sheet-cancel" onclick="closeNameSheet()">キャンセル</div>
+</div>
+
+<!-- 貼り付けシート -->
+<div class="sheet-overlay" id="paste-overlay" onclick="closePasteSheet()"></div>
+<div class="bottom-sheet" id="paste-sheet" style="max-height:88vh;">
+  <div class="sheet-header">📋 レシピを貼り付け</div>
+  <div class="paste-sheet-body">
+    <p class="paste-sheet-note">レシピサイトや料理ノートからコピーしたテキストを貼り付けてください。材料名・量・単位を自動で読み取ります。（現在の入力は置き換わります）</p>
+    <textarea class="paste-textarea" id="paste-textarea"
+      placeholder="例）&#10;米粉　200g&#10;砂糖　大さじ2&#10;塩　小さじ1/2&#10;ドライイースト　3g&#10;ぬるま湯　180ml&#10;オリーブオイル　大さじ1"></textarea>
+    <div class="paste-msg" id="paste-msg"></div>
+  </div>
+  <div class="paste-sheet-btns">
+    <button class="paste-cancel-btn" onclick="closePasteSheet()">キャンセル</button>
+    <button class="paste-ok-btn" onclick="applyPastedRecipe()">読み込む</button>
+  </div>
 </div>
 
 <!-- 基準材料シート -->
@@ -1300,6 +1400,94 @@
 
   function escHtml(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ---- テキスト貼り付け ----
+
+  function openPasteSheet() {
+    const msgEl = document.getElementById('paste-msg');
+    msgEl.textContent = '';
+    msgEl.className = 'paste-msg';
+    document.getElementById('paste-overlay').classList.add('active');
+    document.getElementById('paste-sheet').classList.add('active');
+    setTimeout(() => document.getElementById('paste-textarea').focus(), 300);
+  }
+
+  function closePasteSheet() {
+    document.getElementById('paste-overlay').classList.remove('active');
+    document.getElementById('paste-sheet').classList.remove('active');
+  }
+
+  function parseRecipeText(text) {
+    const results = [];
+    const prefixUnits = ['大さじ', '小さじ', 'カップ'];
+    const suffixUnits = ['ml', 'cc', 'kg', 'g', '個', '本', '枚'];
+    const trailingNote = '(?:\\s*[（(][^）)]*[）)])?\\s*$';
+    const amountPat = '(\\d+(?:[./]\\d+)?)';
+
+    for (const rawLine of text.split(/[\n\r]+/)) {
+      let line = rawLine
+        .replace(/^[\s　・●■▶►\-\*。、☆★◎○△▲◇◆＊※]+/, '')
+        .replace(/　/g, ' ')
+        .trim();
+      if (!line || line.length < 2) continue;
+
+      let parsed = null;
+
+      // "名前 大さじ2" / "名前 小さじ1/2" / "名前 カップ1"
+      for (const u of prefixUnits) {
+        const m = line.match(new RegExp('^(.+?)\\s+' + u + amountPat + trailingNote));
+        if (m && m[1].trim()) { parsed = { name: m[1].trim(), amountStr: m[2], unit: u }; break; }
+      }
+
+      // "名前 200g" / "名前200g"
+      if (!parsed) {
+        for (const u of suffixUnits) {
+          const eu = u.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const m = line.match(new RegExp('^(.+?)\\s*' + amountPat + eu + trailingNote));
+          if (m && m[1].trim()) { parsed = { name: m[1].trim(), amountStr: m[2], unit: u }; break; }
+        }
+      }
+
+      // "名前 適量"
+      if (!parsed) {
+        const m = line.match(/^(.+?)\s+適量\s*(?:[（(][^）)]*[）)])?\s*$/);
+        if (m && m[1].trim()) parsed = { name: m[1].trim(), amountStr: '1', unit: '適量' };
+      }
+
+      // "名前 数量" (単位なし → デフォルト)
+      if (!parsed) {
+        const m = line.match(/^(.+?)\s+(\d+(?:[./]\d+)?)\s*(?:[（(][^）)]*[）)])?\s*$/);
+        if (m && m[1].trim()) parsed = { name: m[1].trim(), amountStr: m[2], unit: 'g', noUnit: true };
+      }
+
+      if (parsed) {
+        if (parsed.noUnit && unitDefaults[parsed.name]) parsed.unit = unitDefaults[parsed.name];
+        parsed.amount = parseFraction(parsed.amountStr);
+        delete parsed.noUnit;
+        results.push(parsed);
+      }
+    }
+    return results;
+  }
+
+  function applyPastedRecipe() {
+    const text = document.getElementById('paste-textarea').value;
+    const parsed = parseRecipeText(text);
+    const msgEl = document.getElementById('paste-msg');
+
+    if (parsed.length === 0) {
+      msgEl.textContent = '材料を読み取れませんでした。形式を確認してください。';
+      msgEl.className = 'paste-msg error';
+      return;
+    }
+
+    ingredients = parsed;
+    renderList();
+    updateBaseBtn();
+    document.getElementById('result-card').style.display = 'none';
+    document.getElementById('paste-textarea').value = '';
+    closePasteSheet();
   }
 
   // 初期化
