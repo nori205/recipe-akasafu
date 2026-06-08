@@ -1288,7 +1288,7 @@
           oninput="ingredients[${i}].amountStr=this.value; ingredients[${i}].amount=parseFraction(this.value)">
         <button type="button" class="frac-pick-btn" onclick="openFracPicker(${i})">½</button>
         <select class="unit-select" onchange="ingredients[${i}].unit=this.value; updateBaseBtn()">
-          ${['g','ml','大さじ','小さじ','個','本','枚','カップ','cc','kg','適量'].map(u =>
+          ${['g','ml','大さじ','小さじ','個','本','枚','カップ','cc','kg','適量','少々','袋','缶'].map(u =>
             `<option value="${u}"${ing.unit===u?' selected':''}>${u}</option>`
           ).join('')}
         </select>
@@ -1419,55 +1419,92 @@
   }
 
   function parseRecipeText(text) {
-    const results = [];
     const prefixUnits = ['大さじ', '小さじ', 'カップ'];
-    const suffixUnits = ['ml', 'cc', 'kg', 'g', '個', '本', '枚'];
+    const suffixUnits = ['ml', 'cc', 'kg', 'g', '個', '本', '枚', '袋', '缶', 'パック'];
+    const noQtyUnits = ['適量', '少々', 'ひとつまみ', '少量'];
     const trailingNote = '(?:\\s*[（(][^）)]*[）)])?\\s*$';
-    const amountPat = '(\\d+(?:[./]\\d+)?)';
+    const amtPat = '(\\d+(?:[./]\\d+)?)';
 
-    for (const rawLine of text.split(/[\n\r]+/)) {
-      let line = rawLine
+    function normLine(raw) {
+      return raw
         .replace(/^[\s　・●■▶►\-\*。、☆★◎○△▲◇◆＊※]+/, '')
-        .replace(/　/g, ' ')
+        .replace(/[　\t]/g, ' ')
         .trim();
-      if (!line || line.length < 2) continue;
+    }
 
-      let parsed = null;
-
-      // "名前 大さじ2" / "名前 小さじ1/2" / "名前 カップ1"
+    function tryParse(line) {
+      if (!line || line.length < 2) return null;
+      let p = null;
+      function validName(s) { return s && s.trim() && !/^\d+$/.test(s.trim()); }
+      // "名前大さじ2" / "名前 大さじ2" （スペースなしも可）
       for (const u of prefixUnits) {
-        const m = line.match(new RegExp('^(.+?)\\s+' + u + amountPat + trailingNote));
-        if (m && m[1].trim()) { parsed = { name: m[1].trim(), amountStr: m[2], unit: u }; break; }
+        const m = line.match(new RegExp('^(.+?)\\s*' + u + amtPat + trailingNote));
+        if (m && validName(m[1])) { p = { name: m[1].trim(), amountStr: m[2], unit: u }; break; }
       }
-
-      // "名前 200g" / "名前200g"
-      if (!parsed) {
+      // "名前200g" / "名前 200g"
+      if (!p) {
         for (const u of suffixUnits) {
           const eu = u.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const m = line.match(new RegExp('^(.+?)\\s*' + amountPat + eu + trailingNote));
-          if (m && m[1].trim()) { parsed = { name: m[1].trim(), amountStr: m[2], unit: u }; break; }
+          const m = line.match(new RegExp('^(.+?)\\s*' + amtPat + eu + trailingNote));
+          if (m && validName(m[1])) { p = { name: m[1].trim(), amountStr: m[2], unit: u }; break; }
         }
       }
-
-      // "名前 適量"
-      if (!parsed) {
-        const m = line.match(/^(.+?)\s+適量\s*(?:[（(][^）)]*[）)])?\s*$/);
-        if (m && m[1].trim()) parsed = { name: m[1].trim(), amountStr: '1', unit: '適量' };
+      // "名前少々" / "名前 適量" etc.
+      if (!p) {
+        for (const u of noQtyUnits) {
+          const m = line.match(new RegExp('^(.+?)\\s*' + u + trailingNote));
+          if (m && validName(m[1])) { p = { name: m[1].trim(), amountStr: '1', unit: u }; break; }
+        }
       }
-
-      // "名前 数量" (単位なし → デフォルト)
-      if (!parsed) {
-        const m = line.match(/^(.+?)\s+(\d+(?:[./]\d+)?)\s*(?:[（(][^）)]*[）)])?\s*$/);
-        if (m && m[1].trim()) parsed = { name: m[1].trim(), amountStr: m[2], unit: 'g', noUnit: true };
+      // "名前 数量"（単位なし）
+      if (!p) {
+        const m = line.match(new RegExp('^(.+?)\\s+' + amtPat + trailingNote));
+        if (m && m[1].trim() && !/^\d+$/.test(m[1].trim())) {
+          p = { name: m[1].trim(), amountStr: m[2], unit: 'g', noUnit: true };
+        }
       }
+      return p;
+    }
 
-      if (parsed) {
-        if (parsed.noUnit && unitDefaults[parsed.name]) parsed.unit = unitDefaults[parsed.name];
-        parsed.amount = parseFraction(parsed.amountStr);
-        delete parsed.noUnit;
-        results.push(parsed);
+    function looksLikeAmountLine(line) {
+      if (/^\d/.test(line)) return true;
+      if (prefixUnits.some(u => line.startsWith(u))) return true;
+      if (noQtyUnits.some(u => line === u || line.startsWith(u + '（'))) return true;
+      return false;
+    }
+
+    function finalize(p) {
+      if (!p) return null;
+      if (p.noUnit && unitDefaults[p.name]) p.unit = unitDefaults[p.name];
+      p.amount = parseFraction(p.amountStr);
+      delete p.noUnit;
+      return p;
+    }
+
+    const lines = text.split(/[\n\r]+/).map(normLine);
+    const results = [];
+
+    // Pass 1: 1行に名前＋量が入っているパターン
+    for (const line of lines) {
+      const p = tryParse(line);
+      if (p) results.push(finalize(p));
+    }
+
+    // Pass 2: 名前と量が別々の行（クックパッド形式など）
+    if (results.length === 0) {
+      const nonEmpty = lines.filter(l => l.length > 0);
+      for (let i = 0; i < nonEmpty.length - 1; i++) {
+        const nextLine = nonEmpty[i + 1];
+        if (!looksLikeAmountLine(nextLine)) continue;
+        const combined = nonEmpty[i] + ' ' + nextLine;
+        const p = tryParse(combined);
+        if (p && p.name) {
+          results.push(finalize(p));
+          i++;
+        }
       }
     }
+
     return results;
   }
 
